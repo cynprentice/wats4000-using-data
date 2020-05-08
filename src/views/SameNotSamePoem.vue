@@ -1,33 +1,28 @@
 <template>
   <div class="rhymesaurus">
-    <h2>Same Not Same Poem</h2>
+    <h2>Poem Generator</h2>
     <form v-on:submit.prevent="writePoem">
       <p>
-        Write Same Not Same Poem for
+        Write "Same Not Same Poem" for
         <input type="text" v-model="subject" />
-        <button type="submit">Search</button>
+        <button type="submit" v-show="ready">Search</button>
       </p>
     </form>
-        <div class="poem">
-          <h3> version 1 </h3>
-      <p>{{this.poemLine1}}</p>
-      <p>{{this.poemLine2}}</p>
-    </div>
     <div class="poem">
-      <h3> version 2</h3>
-      <p> {{this.antonym1}} {{this.antonym2}} {{this.synonym1}} {{this.synonym2}} {{this.subject}}</p>
-      <p>{{this.rhymeAntonym1}} {{this.rhymeAntonym2}} {{this.rhymeSynonym1}} {{this.rhymeSynonym2}} {{this.rhyme}}</p>
+      <h3 class="poemTitle">{{this.subject}}</h3>
+      <p>{{this.synonym1}} {{this.synonym2}} {{this.antonym1}} {{this.antonym2}} {{this.subject}}</p>
+      <p>{{this.rhymeSynonym1}} {{this.rhymeSynonym2}} {{this.rhymeAntonym1}} {{this.rhymeAntonym2}} {{this.rhyme}}</p>
+      <!--if no subject is provided, display instructions -->
+      <p>{{this.instructions}}</p>
     </div>
 
     <ul v-if="errors.length > 0" class="errors">
-      <!-- CYPR - get the correct key for the error array -->
-      <li v-for="error of errors" :key="error.net">{{error.message}}</li>
+      <li v-for="error of errors">{{error.message}}</li>
     </ul>
   </div>
 </template>
 
 <script>
-// TODO: Import axios properly here.
 import axios from "axios";
 
 export default {
@@ -38,28 +33,60 @@ export default {
       antResults: null,
       rhymeResults: null,
       errors: [],
-      subject: "",
-      rhyme: "right",
-      synonym1: "white",
-      synonym2: "light",
-      antonym1: "dark",
-      antonym2: "fear",
-      rhymeSynonym1: "war",
-      rhymeSynonym2: "brawl",
-      rhymeAntonym1: "love",
-      rhymeAntonym2: "care",
-      poemLine1:"",
-      poemLine2: ""
-
+      instructions: "",
+      subject: "whale",
+      synonym1: "hippopotamus",
+      synonym2: "rhinoceros",
+      antonym1: "bird", 
+      antonym2: "mouse",
+      rhyme: "snail",
+      rhymeSynonym1: "alligator",
+      rhymeSynonym2: "komodo", 
+      rhymeAntonym1: "donkey",
+      rhymeAntonym2: "sheep",
+      ready: true
     };
   },
 
   methods: {
-    findNotSameWords: function(word) {
-      console.log("calling findNotSameWords with " + word)
-      let poemLine = ''
-    axios
-       .get("https://api.datamuse.com/words", {
+    findSameWords: function(word, line) {
+     // console.log("called findSameWords with " + word + " for line " + line);
+      axios
+        .get("https://api.datamuse.com/words", {
+          params: {
+            ml: word,
+            max: 2
+          }
+        })
+        .then(response => {
+          this.synResults = response.data;
+          console.log("findSameWords found " + this.synResults.length + " Same Words for " + word)
+          // Set value of first synonym
+          if (this.synResults.length >= 1) {
+            if (line == 1) {
+            this.synonym2 = this.synResults[0].word
+           } else {
+            this.rhymeSynonym2 = this.synResults[0].word
+            }
+          }
+          // Set value of second synonym
+          if (this.synResults.length == 2) {
+            if (line == 1) {
+            this.synonym1 = this.synResults[1].word
+           } else {
+            this.rhymeSynonym1 = this.synResults[1].word
+            }
+          }
+        })
+        .catch(error => {
+          this.errors.push(error);
+           this.ready = true
+        });
+     // console.log("*******completed executing findSameWords!");
+    },
+    findNotSameWords: function(word, line) {
+      axios
+        .get("https://api.datamuse.com/words", {
           params: {
             rel_ant: word,
             max: 2
@@ -67,106 +94,81 @@ export default {
         })
         .then(response => {
           this.antResults = response.data;
-          console.log("antResults.length is " + this.antResults.length)
-          if(this.antResults && this.antResults.length >=2) {
-            this.antonym1 = this.antResults[0].word;
-            this.antonym2 = this.antResults[1].word;
-          } 
-          for (let i = 0; i<this.antResults.length; i++) {
-            console.log("adding antonym " + this.antResults[i].word + " to poem")
-          poemLine += this.antResults[i].word
-          poemLine += ' '
-             console.log ("poemLine is " + poemLine);
+           console.log("findNotSameWords found " + this.antResults.length + " Not Same Words for " + word)
+          // Set value of first antonym
+          if (this.antResults.length >= 1) {
+            if (line == 1) {
+            this.antonym2 = this.antResults[0].word
+           } else {
+            this.rhymeAntonym2 = this.antResults[0].word
+            }
           }
-          poemLine.concat(word)
-                  console.log (" findNotSame with " + word + " returning poemLine " + poemLine);
-        return poemLine
+          // Set value of second synonym
+          if (this.antResults.length == 2) {
+            if (line == 1) {
+            this.antonym1 = this.antResults[1].word
+           } else {
+            this.rhymeAntonym1 = this.antResults[1].word
+            }
+          }
+          this.ready = true
         })
         .catch(error => {
           this.errors.push(error);
+           this.ready = true
         });
-
+      //console.log("&&&&&&&&completed executing findNotSameWords!");
     },
 
-    findSameWords: function(word) {
-      console.log("called findSameWords with " + word)
-      let poemLine = ''
+    findRhyme: function(word) {
       axios
-          .get("https://api.datamuse.com/words", {
-            params: {
-              ml: word,
-              max: 2
-            }
-          })
-          .then(response => {
-            this.synResults = response.data;
-            console.log("synResults.length is " + this.synResults.length)
-            if(this.synResults && this.synResults.length >=2) {
-              this.synonym1 = this.synResults[0].word;
-              this.synonym2 = this.synResults[1].word;
-            } 
-            for (let i = 0; i<this.synResults.length; i++) {
-              console.log("adding synonym " + this.synResults[i].word + " to poem")
-              poemLine += this.synResults[i].word 
-              poemLine += ' '
-          console.log ("poemLine is " + poemLine);
-          } 
-            poemLine += word
-           console.log (" findSame with " + word + " returning poemLine " + poemLine);
-          return poemLine
-          })
-          .catch(error => {
-            this.errors.push(error);
-          });
-
-      },
-      findRhyme: function(word){
-       axios.get('https://api.datamuse.com/words', {
-        params: {
-          rel_rhy: word
-        }
+        .get("https://api.datamuse.com/words", {
+          params: {
+            rel_rhy: word
+          }
         })
-      .then(response => {
-        this.rhymeResults = response.data;
-         if(this.rhymeResults && this.rhymeResults.length >=1) {
-              this.rhyme = this.rhymeResults[0].word;
-            } 
-          })
-      .catch(error => {
-        this.errors.push(error);
-       });
-     },
+        .then(response => {
+          this.rhymeResults = response.data;
+          console.log("findRhyme found " + this.rhymeResults.length + " rhymes for " + word)
+          if (this.rhymeResults && this.rhymeResults.length >= 1) {
+            this.rhyme = this.rhymeResults[0].word;
+            this.findSameWords(this.rhyme, 2)
+            this.findNotSameWords(this.rhyme, 2)
+          } else {
+            this.ready = true
+          }
+        })
+        .catch(error => {
+          this.errors.push(error);
+           this.ready = true
+        });
+    },
 
-      writePoem: function() {
-        console.log("before calling findRhyme rhyme is: " + this.rhyme);
-        /* Figure out how to use promises to ensure synonyms and antonyms and rhymes are returned before executing code? 
-   
-        this.poemLine1 = this.findSameWords(this.subject) + this.findNotSameWords(this.subject) + this.subject
-        this.findRhyme(this.subject)
-        .then((response => {
-          this.poemLine2 = this.findSameWords(this.rhyme)
-        }
-     */
-        //this.rhyme = this.findRhyme(this.subject);
-        //console.log("after calling findRhyme rhyme is: " + this.rhyme);
-        console.log("test: " + 
-        this.findSameWords(this.subject))
-        this.poemLine1 = this.findSameWords(this.subject) + this.findNotSameWords(this.subject) + this.subject
-        this.poemLine2 = this.findSameWords(this.rhyme) + this.findNotSameWords(this.rhyme) + this.rhyme
-        
-      
-      /*
-        this.findSameWords(this.subject, this.poemLine1);
-        console.log("write poem before findNotSameWords")
-        this.findNotSameWords(this.subject, this.poemLine1);
-        this.findRhyme();
-        this.findSameWords(this.rhyme, this.poemLine2);
-        this.findSameWords(this.rhyme, this.poemLine2);
-        */
+    writePoem: function() {
+      console.log("subject is " + this.subject)
+      this.ready = false
+      this.instructions = ""
+      this.synonym1 = ""
+      this.synonym2 = ""
+      this.antonym1 = ""
+      this.antonym2 = ""
+      this.rhyme = ""
+      this.rhymeSynonym1 = ""
+      this.rhymeSynonym2 = "" 
+      this.rhymeAntonym1 = ""
+      this.rhymeAntonym2 = ""
+      if (!this.subject) {
+        this.instructions = "Please enter a subject to generate a poem"
       }
-  }
-}
+      this.findSameWords(this.subject, 1)
+      this.findNotSameWords(this.subject, 1) 
+      this.findRhyme(this.subject)
 
+
+     
+    }
+  }
+};
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
@@ -227,5 +229,8 @@ a {
 }
 .poem {
   border: 3px solid green;
+}
+.poemTitle {
+  text-transform: uppercase;
 }
 </style>

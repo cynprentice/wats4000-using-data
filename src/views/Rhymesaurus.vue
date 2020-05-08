@@ -17,9 +17,7 @@
   </div>
 
   <ul v-if="errors.length > 0" class="errors">
-    <!-- CYPR - get the correct key for the error array -->
-    <li v-for="error of errors" :key="error.name">
-{{error.name}} d 
+    <li v-for="error of errors" >
       {{error.message}}
       </li>
   </ul>
@@ -42,7 +40,7 @@ export default {
 
  methods: {
   findWords: function(){
-    axios.get('https://api.daxtamuse.com/words', {
+    axios.get('https://api.datamuse.com/words', {
       params: {
         ml: this.phrase,
         rel_rhy: this.rhyme

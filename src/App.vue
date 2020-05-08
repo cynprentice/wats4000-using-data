@@ -1,10 +1,10 @@
 <template>
   <div id="app">
+    <h1>Rhymesaurus: The Rhyming Thesaurus and Poem Generator</h1>
     <div id="nav">
       <router-link to="/">Rhymesaurus</router-link> |
       <router-link to="/SameNotSamePoem">Poem</router-link> | 
     </div>
-    <h1>Rhymesaurus: The Rhyming Thesaurus and Poem Generator</h1>
     <router-view/>
   </div>
 </template>
